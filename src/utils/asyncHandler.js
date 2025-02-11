@@ -1,11 +1,11 @@
 // Promises
-const asyncHandler = (requestHandler) => {
+const AsyncHandler = (requestHandler) => {
   (req, res, next) => {
     Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err));
   };
 };
 
-export { asyncHandler };
+export { AsyncHandler };
 
 // Try Catch
 /*
