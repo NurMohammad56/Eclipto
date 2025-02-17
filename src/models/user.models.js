@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
   {
-    username: {
+    userName: {
       type: String,
       required: true,
       unique: true,
@@ -19,7 +19,7 @@ const userSchema = new Schema(
       lowercase: true,
       trim: true,
     },
-    fullname: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
@@ -62,6 +62,22 @@ userSchema.pre("save", async function (next) {
 // Custom methods for checking the password validity
 userSchema.methods.isPasswordValid = function (password) {
   return bcrypt.compare(password, this.password);
+};
+
+// Generate ACCESS_TOKEN
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      userName: this.userName,
+      fullName: this.fullName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
 };
 
 export const User = mongoose.model("User", userSchema);
