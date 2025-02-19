@@ -1,6 +1,7 @@
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "./../models/user.models.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const registerUser = AsyncHandler(async (req, res) => {
   // get user details from frontend or postman
@@ -46,6 +47,26 @@ const registerUser = AsyncHandler(async (req, res) => {
   if (!avatarLocalPath || !coverImageLocalPath) {
     throw new ApiError(400, "Avatar and cover image are required");
   }
+
+  // upload them to cloudinary
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+  // then again check avatar and the coverImage still exist or not
+  if (!avatar || !coverImage) {
+    throw new ApiError(500, "Failed to upload images");
+  }
+
+  // create user object
+  const user = await User.create({
+    userName: userName.toLowerCase(),
+    email,
+    fullName,
+    password,
+    avatar: avatar.url,
+    coverImage: coverImage.url,
+    // coverImage: coverImage?.url || "",
+  });
 });
 
 export { registerUser };
