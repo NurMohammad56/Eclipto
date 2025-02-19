@@ -1,5 +1,6 @@
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { User } from "./../models/user.models.js";
 
 const registerUser = AsyncHandler(async (req, res) => {
   // get user details from frontend or postman
@@ -27,6 +28,14 @@ const registerUser = AsyncHandler(async (req, res) => {
     res.status(400).json({
       message: "Invalid email format",
     });
+  }
+
+  const existedUser = User.findOne({
+    $or: [{ email }, { userName }],
+  });
+
+  if (existedUser) {
+    throw new ApiError(400, "User already exists");
   }
 });
 
