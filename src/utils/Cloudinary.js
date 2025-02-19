@@ -10,9 +10,18 @@ cloudinary.config({
 // Upload on Cloudinary method
 const uploadOnCloudinary = async (localFilePath) => {
   try {
-    if (!localFilePath) return null;
+    if (!localFilePath) {
+      console.error("No file provided for upload");
+      return null;
+    }
     // Upload
-    const response = await cloudinary.v2.uploader.upload(localFilePath, {
+
+    if (!fs.existsSync(localFilePath)) {
+      console.error("File not found on local path", localFilePath);
+      return null;
+    }
+
+    const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto", // Auto-detected type of the uploaded file
     });
 
@@ -20,6 +29,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 
     return response;
   } catch (error) {
+    console.error("Error uploading to Cloudinary:", error.message);
     fs.unlinkSync(localFilePath); // Delete if failed to upload
     return null;
   }
