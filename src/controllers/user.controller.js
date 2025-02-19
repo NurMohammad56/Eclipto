@@ -1,5 +1,6 @@
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "./../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
@@ -67,6 +68,21 @@ const registerUser = AsyncHandler(async (req, res) => {
     coverImage: coverImage.url,
     // coverImage: coverImage?.url || "",
   });
+
+  // remove password and refreshToken
+  const createdUser = await User.find(user._id).select(
+    "-password -refreshToken"
+  );
+
+  // check for user created or not
+  if (!createdUser) {
+    throw new ApiError(500, "Failed to create user while registering user");
+  }
+
+  // return response
+  return res
+    .status(201)
+    .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
 export { registerUser };
