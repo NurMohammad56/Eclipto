@@ -17,7 +17,9 @@ const registerUser = AsyncHandler(async (req, res) => {
 
   // get user details
   const { userName, email, fullName, password } = req.body;
-  // console.log("Email : ", email);
+  if (!req.body || Object.keys(req.body).length === 0) {
+    throw new ApiError(400, "You are nothing fill-up anything");
+  }
 
   // validation
   if (
@@ -29,7 +31,7 @@ const registerUser = AsyncHandler(async (req, res) => {
   }
 
   // check email format
-  if (!email.includes("@")) {
+  if (!email || !email.includes("@") || !email.includes(".")) {
     throw new ApiError(400, "Invalid email format");
   }
 
@@ -63,7 +65,7 @@ const registerUser = AsyncHandler(async (req, res) => {
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
-  // then again check avatar and the coverImage still exist or not
+  // then again check avatar still exist or not
   if (!avatar) {
     throw new ApiError(500, "Failed to upload images");
   }
