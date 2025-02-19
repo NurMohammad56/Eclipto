@@ -43,11 +43,20 @@ const registerUser = AsyncHandler(async (req, res) => {
   }
 
   // check for images and avatar
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  const avatarLocalPath = req.files?.avatar[0]?.path; //Required
+  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-  if (!avatarLocalPath || !coverImageLocalPath) {
-    throw new ApiError(400, "Avatar and cover image are required");
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar is required");
   }
 
   // upload them to cloudinary
@@ -55,7 +64,7 @@ const registerUser = AsyncHandler(async (req, res) => {
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   // then again check avatar and the coverImage still exist or not
-  if (!avatar || !coverImage) {
+  if (!avatar) {
     throw new ApiError(500, "Failed to upload images");
   }
 
@@ -66,8 +75,8 @@ const registerUser = AsyncHandler(async (req, res) => {
     fullName,
     password,
     avatar: avatar.url,
-    coverImage: coverImage.url,
-    // coverImage: coverImage?.url || "",
+    // coverImage: coverImage.url,
+    coverImage: coverImage?.url || "",
   });
 
   // remove password and refreshToken
