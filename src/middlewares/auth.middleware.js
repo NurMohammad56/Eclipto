@@ -1,9 +1,9 @@
-import { AsyncHandler } from "../utils/asyncHandler";
-import { ApiError } from "../utils/apiError";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 import { User } from "./../models/user.models.js";
 import jwt from "jsonwebtoken";
 
-export const verifyJWT = AsyncHandler(async (req, res, next) => {
+export const verifyJWT = AsyncHandler(async (req, _, next) => {
   try {
     const token =
       req.cookies?.accessToken ||
@@ -26,6 +26,6 @@ export const verifyJWT = AsyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    throw new ApiError(401, error.message "Unauthorized access");
+    throw new ApiError(401, error.message || "Unauthorized access");
   }
 });

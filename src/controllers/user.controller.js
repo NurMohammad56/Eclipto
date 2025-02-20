@@ -103,7 +103,7 @@ const registerUser = AsyncHandler(async (req, res) => {
 
   // remove password and refreshToken
   const createdUser = await User.find(user._id).select(
-    "-password -refreshToken"
+    "+password -refreshToken"
   );
 
   // check for user created or not
@@ -130,7 +130,7 @@ const loginUser = AsyncHandler(async (req, res) => {
   const { userName, email, password } = req.body;
 
   // check email or userName is provided or not
-  if (!email || !userName) {
+  if (!email && !userName) {
     throw new ApiError(400, "Email or username is required");
   }
 
@@ -184,6 +184,23 @@ const loginUser = AsyncHandler(async (req, res) => {
 });
 
 // Logout user
-const logOutUser = AsyncHandler(async (req, res) => {});
+const logOutUser = AsyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    { $unset: { refreshToken: 1 } },
+    { new: true }
+  );
 
-export { registerUser, loginUser };
+  const option = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  res
+    .status(200)
+    .clearCookie("accessToken", option)
+    .clearCookie("refreshToken", option)
+    .json(new ApiResponse(201, {}, "User logged out successfully"));
+});
+
+export { registerUser, loginUser, logOutUser };

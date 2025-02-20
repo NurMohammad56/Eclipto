@@ -44,7 +44,6 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Password must be provided"],
       minlength: 6,
-      select: false,
     },
     refreshToken: {
       type: String,
@@ -65,6 +64,10 @@ userSchema.pre("save", async function (next) {
 
 // Custom methods for checking the password validity
 userSchema.methods.isPasswordValid = function (password) {
+  if (!password || !this.password) {
+    throw new Error("Password or hashed password is missing");
+  }
+
   return bcrypt.compare(password, this.password);
 };
 
