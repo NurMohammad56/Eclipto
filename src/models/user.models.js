@@ -72,7 +72,7 @@ userSchema.methods.isPasswordValid = function (password) {
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
-      _id: this._id,
+      _id: this._id, // going to check user id while verifying token
       email: this.email,
       userName: this.userName,
       fullName: this.fullName,
