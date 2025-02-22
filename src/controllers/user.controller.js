@@ -282,7 +282,7 @@ const refreshAccessToken = AsyncHandler(async (req, res) => {
       secure: true,
     };
 
-    // return res
+    // res
     res
       .status(200)
       .cookie("accessToken", accessToken, option)
@@ -350,6 +350,31 @@ const getCurrentUser = AsyncHandler(async (req, res) => {
   );
 });
 
+// Update user profile fullName and email
+const updateUserProfile = AsyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+
+  if (!fullName || !email) {
+    throw new ApiError(400, "Full name and email are required");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: { fullName, email },
+    },
+    { new: true }
+  ).select("-password");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User profile updated successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -357,4 +382,5 @@ export {
   refreshAccessToken,
   changePassword,
   getCurrentUser,
+  updateUserProfile,
 };
