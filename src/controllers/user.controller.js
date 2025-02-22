@@ -203,7 +203,7 @@ const logOutUser = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
-// Refresh token
+// generate new accessToken using refreshToken
 const refreshAccessToken = AsyncHandler(async (req, res) => {
   // get refreshToken from cookie
   const incomingRefreshToken =
@@ -235,9 +235,8 @@ const refreshAccessToken = AsyncHandler(async (req, res) => {
     }
 
     // generate new access token
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
-      user._id
-    );
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
 
     // check access token is available or not
     if (!accessToken) {
@@ -254,7 +253,7 @@ const refreshAccessToken = AsyncHandler(async (req, res) => {
     res
       .status(200)
       .cookie("accessToken", accessToken, option)
-      .cookie("refreshToken", refreshToken, option)
+      .cookie("refreshToken", newRefreshToken, option)
       .json(
         new ApiResponse(201, accessToken, "Access token refreshed successfully")
       );
