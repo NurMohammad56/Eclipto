@@ -8,6 +8,14 @@ import jwt from "jsonwebtoken";
 // Generate access and refresh token
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
+    /*
+    <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+    1.find the user using userId as a parameter the data comes as a argument
+    2.generate accessToken and refreshToken using generateAccessToken() method
+    3.store refreshToken in user.refreshToken
+    4.save the user
+    5.return accessToken and refreshToken
+    */
     const user = await User.findById(userId);
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateAccessToken();
@@ -26,15 +34,18 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 // Register user
 const registerUser = AsyncHandler(async (req, res) => {
-  // get user details from frontend or postman
-  // validation - not empty
-  // check if user already exists : email, userName
-  // check for images and avatar
-  // upload them to cloudinary, then again check the avatar still exist or not
-  // create user object - create entry in db
-  // remove password and refresh token field from response
-  // check for user created successfully or not
-  // return success or error message
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1.get user details from frontend or postman
+  2.validation - not empty
+  3.check if user already exists : email, userName
+  4.check for images and avatar
+  5.upload them to cloudinary, then again check the avatar still exist or not
+  6.create user object - create entry in db
+  7.remove password and refresh token field from response
+  8.check for user created successfully or not
+  9.return success or error message 
+  */
 
   // get user details
   const { userName, email, fullName, password } = req.body;
@@ -120,12 +131,15 @@ const registerUser = AsyncHandler(async (req, res) => {
 
 // Login user
 const loginUser = AsyncHandler(async (req, res) => {
-  // get user details from frontend or postman
-  // using userName or email and password
-  // check if user exist or not
-  // compare password
-  // access token and refresh token generation
-  // store in cookie
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1.get user details from frontend or postman
+  2.using userName or email and password
+  3.check if user exist or not
+  4.compare password
+  5.access token and refresh token generation
+  6.store in cookie
+  */
 
   // get user details
   const { userName, email, password } = req.body;
@@ -185,6 +199,12 @@ const loginUser = AsyncHandler(async (req, res) => {
 });
 // Logout user
 const logOutUser = AsyncHandler(async (req, res) => {
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1. find the user using req.user._id because we have already set user in req.user then $unset refreshToken: 1
+  2. options for cookie
+  3. return res and clear cookie accessToken and refreshToken
+  */
   await User.findByIdAndUpdate(
     req.user._id,
     { $unset: { refreshToken: 1 } },
@@ -205,6 +225,19 @@ const logOutUser = AsyncHandler(async (req, res) => {
 
 // generate new accessToken using refreshToken
 const refreshAccessToken = AsyncHandler(async (req, res) => {
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1. get refreshToken from cookie
+  2.check the incoming refreshToken is available
+  3.verify the refreshToken using jwt.verify 
+  4.check id user is available
+  5.matching refreshToken with user refreshToken
+  6.generate new accessToken and new refreshToken
+  7.check accessToken is available or not
+  8.cookie options
+  9.return
+
+  */
   // get refreshToken from cookie
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
@@ -262,4 +295,57 @@ const refreshAccessToken = AsyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logOutUser, refreshAccessToken };
+// Change password
+const changePassword = AsyncHandler(async (req, res) => {
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1.match old password with new password using req.body
+  2.find the user
+  3.check if user is available or not
+  4.compare the password with old password
+  5.if password not match then throw error
+  6.save the new password
+  7.return
+  */
+
+  // get oldPassword and newPassword from req.body
+  const { oldPassword, newPassword } = req.body;
+
+  // find the user
+  const user = await User.findById(req.user._id);
+
+  // check if user is available or not
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // compare the password with old password
+  const isPasswordCorrect = await user.isPasswordValid(oldPassword);
+
+  // if password not match then throw error
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Please provide correct old password");
+  }
+
+  // save the new password
+  user.password = newPassword;
+  const savePassword = await user.save({ validateBeforeSave: true });
+
+  // check if password is changed or not
+  if (!savePassword) {
+    throw new ApiError(500, "Failed to changed password");
+  }
+
+  // return
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logOutUser,
+  refreshAccessToken,
+  changePassword,
+};
