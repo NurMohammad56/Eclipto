@@ -344,6 +344,10 @@ const changePassword = AsyncHandler(async (req, res) => {
 
 // get current user
 const getCurrentUser = AsyncHandler(async (req, res) => {
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1. find the user using req.user and also retrurn
+  */
   return res.json(
     200,
     new ApiResponse(200, req.user, "Current user details fetched successfully")
@@ -352,6 +356,14 @@ const getCurrentUser = AsyncHandler(async (req, res) => {
 
 // Update user profile fullName and email
 const updateUserProfile = AsyncHandler(async (req, res) => {
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1. get fullName and email from req.body
+  2. check if fullName and email are provided or not
+  3. find the user and $set fullName and email also remove password field from response
+  4. check if user is available or not
+  5. return updated user details
+  */
   const { fullName, email } = req.body;
 
   if (!fullName || !email) {
@@ -375,6 +387,47 @@ const updateUserProfile = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "User profile updated successfully"));
 });
 
+// Update user avatar
+const updateUserAvatar = AsyncHandler(async (req, res) => {
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1. get avatar frrom req.file?.path
+  2. check if avatar is provided or not
+  3. upload avatar to the cloudinary
+  4. check if avatar.url is uploaded or not
+  4. find the user using req.user?._id and $set the avatar to avatar.url then new true and remove password field from response
+  5. check if user is available or not
+  6. return updated user details
+  */
+
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar.url) {
+    throw new ApiError(404, "Error uploading avatar to cloudinary");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: { avatar: avatar.url },
+    },
+    { new: true }
+  ).select("-password");
+
+  if (!user) {
+    throw new ApiError(404, "User is not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User avatar updated successfully"));
+});
 export {
   registerUser,
   loginUser,
@@ -383,4 +436,5 @@ export {
   changePassword,
   getCurrentUser,
   updateUserProfile,
+  updateUserAvatar,
 };
