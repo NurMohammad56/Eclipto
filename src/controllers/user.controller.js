@@ -396,7 +396,6 @@ const updateUserAvatar = AsyncHandler(async (req, res) => {
   3. upload avatar to the cloudinary
   4. check if avatar.url is uploaded or not
   4. find the user using req.user?._id and $set the avatar to avatar.url then new true and remove password field from response
-  5. check if user is available or not
   6. return updated user details
   */
 
@@ -420,13 +419,43 @@ const updateUserAvatar = AsyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
-  if (!user) {
-    throw new ApiError(404, "User is not found");
-  }
-
   return res
     .status(200)
     .json(new ApiResponse(200, user, "User avatar updated successfully"));
+});
+
+// Updatte user cover image
+const updateUserCoverImage = AsyncHandler(async (req, res) => {
+  /*
+  <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
+  1. get coverImage from req.file?.path
+  2. check if coverImage is provided or not
+  3. upload coverImage to the cloudinary
+  4. check if coverImage.url is uploaded or not
+  4. find the user using req.user?._id and $set the coverImage to coverImage.url then new true and remove password field from the response
+  6. return updated user details
+  */
+  const coverImgLocal = req.file?.path;
+  if (!coverImgLocal) {
+    throw new ApiError(400, "Cover image file is missing");
+  }
+
+  const coverImage = await uploadOnCloudinary(coverImgLocal);
+  if (!coverImage.url) {
+    throw new ApiError(404, "Error uploading cover image to cloudinary");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: { coverImage: coverImage.url },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User cover image updated successfully"));
 });
 export {
   registerUser,
@@ -437,4 +466,5 @@ export {
   getCurrentUser,
   updateUserProfile,
   updateUserAvatar,
+  updateUserCoverImage,
 };
