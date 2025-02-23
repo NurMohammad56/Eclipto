@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "./../models/user.models.js";
 import jwt from "jsonwebtoken";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
-import { deleteFromCloudinary } from "../utils/CloudinaryDestroy.js";
+import { deleteFromCloudinary } from "../utils/CloudinariDestroy.js";
 
 // Generate access and refresh token
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -447,6 +447,7 @@ const updateUserCoverImage = AsyncHandler(async (req, res) => {
   <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
   1. get coverImage from req.file?.path
   2. check if coverImage is provided or not
+  5. Delete old cover image
   3. upload coverImage to the cloudinary
   4. check if coverImage.url is uploaded or not
   4. find the user using req.user?._id and $set the coverImage to coverImage.url then new true and remove password field from the response
@@ -457,12 +458,29 @@ const updateUserCoverImage = AsyncHandler(async (req, res) => {
     throw new ApiError(400, "Cover image file is missing");
   }
 
+  // Delete the old cover image from cloudinary
+  const user = await User.findById(req.user?._id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.coverImage) {
+    const oldCoverImageId = user.coverImage.split("/").pop().split(".")[0];
+    const isDeleted = await deleteFromCloudinary(oldCoverImageId);
+    if (!isDeleted) {
+      throw new ApiError(
+        500,
+        "Failed to delete old cover image from cloudinary"
+      );
+    }
+  }
+
   const coverImage = await uploadOnCloudinary(coverImgLocal);
   if (!coverImage.url) {
     throw new ApiError(404, "Error uploading cover image to cloudinary");
   }
 
-  const user = await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: { coverImage: coverImage.url },
@@ -472,7 +490,9 @@ const updateUserCoverImage = AsyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "User cover image updated successfully"));
+    .json(
+      new ApiResponse(200, updatedUser, "User cover image updated successfully")
+    );
 });
 
 export {
