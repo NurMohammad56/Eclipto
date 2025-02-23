@@ -2,8 +2,9 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "./../models/user.models.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
+import { uploadOnCloudinary } from "../utils/Cloudinary.js";
+import { deleteFromCloudinary } from "../utils/CloudinaryDestroy.js";
 
 // Generate access and refresh token
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -18,8 +19,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
     */
     const user = await User.findById(userId);
     const accessToken = await user.generateAccessToken();
-    const refreshToken = await user.generateAccessToken();
-
+    const refreshToken = await user.generateRefreshToken();
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
@@ -115,7 +115,7 @@ const registerUser = AsyncHandler(async (req, res) => {
 
   // remove password and refreshToken
   const createdUser = await User.find(user._id).select(
-    "+password -refreshToken"
+    "-password -refreshToken"
   );
 
   // check for user created or not
@@ -393,9 +393,10 @@ const updateUserAvatar = AsyncHandler(async (req, res) => {
   <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
   1. get avatar frrom req.file?.path
   2. check if avatar is provided or not
-  3. upload avatar to the cloudinary
-  4. check if avatar.url is uploaded or not
-  4. find the user using req.user?._id and $set the avatar to avatar.url then new true and remove password field from response
+  4. Delete old avetar
+  5. upload avatar to the cloudinary
+  6. check if avatar.url is uploaded or not
+  7. find the user using req.user?._id and $set the avatar to avatar.url then new true and remove password field from response
   6. return updated user details
   */
 
@@ -405,13 +406,27 @@ const updateUserAvatar = AsyncHandler(async (req, res) => {
     throw new ApiError(400, "Avatar file is missing");
   }
 
+  // Delete the old avatar from cloudinary
+  const user = await User.findById(req.user?._id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.avatar) {
+    const oldAvatarId = user.avatar.split("/").pop().split(".")[0];
+    const isDeleted = await deleteFromCloudinary(oldAvatarId);
+    if (!isDeleted) {
+      throw new ApiError(500, "Failed to delete old avatar from cloudinary");
+    }
+  }
+
   const avatar = await uploadOnCloudinary(avatarLocalPath);
 
   if (!avatar.url) {
     throw new ApiError(404, "Error uploading avatar to cloudinary");
   }
 
-  const user = await User.findByIdAndUpdate(
+  const updateduser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: { avatar: avatar.url },
@@ -421,7 +436,9 @@ const updateUserAvatar = AsyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "User avatar updated successfully"));
+    .json(
+      new ApiResponse(200, updateduser, "User avatar updated successfully")
+    );
 });
 
 // Updatte user cover image
@@ -457,6 +474,7 @@ const updateUserCoverImage = AsyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "User cover image updated successfully"));
 });
+
 export {
   registerUser,
   loginUser,

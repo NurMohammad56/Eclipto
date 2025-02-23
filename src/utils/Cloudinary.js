@@ -24,12 +24,15 @@ const uploadOnCloudinary = async (localFilePath) => {
       resource_type: "auto", // Auto-detected type of the uploaded file
     });
 
-    // console.log("File is uploaded on cloudinary", response.url);
-
-    // when finished, delete the local file
-    fs.unlinkSync(localFilePath); // Delete after upload
-
-    return response;
+    // check if response has a URL then delete local file and return the response
+    if (response?.url) {
+      fs.unlinkSync(localFilePath);
+      return response;
+    } else {
+      console.error("No URL found in the Cloudinary response");
+      fs.unlinkSync(localFilePath);
+      return null;
+    }
   } catch (error) {
     console.error("Error uploading to Cloudinary:", error.message);
     fs.unlinkSync(localFilePath); // Delete if failed to upload
