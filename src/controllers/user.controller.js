@@ -5,7 +5,8 @@ import { User } from "./../models/user.models.js";
 import jwt from "jsonwebtoken";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
 import { deleteFromCloudinary } from "../utils/CloudinariDestroy.js";
-import { request } from "express";
+
+import mongoose from "mongoose";
 
 // Generate access and refresh token
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -300,7 +301,7 @@ const refreshAccessToken = AsyncHandler(async (req, res) => {
 const changePassword = AsyncHandler(async (req, res) => {
   /*
   <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
-  1.match old password with new password using req.body
+  1.get password with new password using req.body
   2.find the user
   3.check if user is available or not
   4.compare the password with old password
@@ -616,9 +617,6 @@ const getWatchHistory = AsyncHandler(async (req, res) => {
       },
     },
   ]);
-  if (!watchHistory?.length) {
-    throw new ApiError(404, "No watch history found");
-  }
 
   return res
     .status(200)
