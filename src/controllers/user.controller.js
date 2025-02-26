@@ -74,7 +74,7 @@ const registerUser = AsyncHandler(async (req, res) => {
     $or: [{ email }, { userName }],
   });
 
-  if (existedUser) {
+  if (!existedUser) {
     throw new ApiError(409, "User already exists");
   }
 
