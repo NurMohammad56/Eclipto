@@ -51,4 +51,50 @@ const getAllVideos = AsyncHandler(async (req, res) => {
     );
 });
 
+// publish the video
+const publishAVideo = AsyncHandler(async (req, res) => {
+  const { title, description } = req.body;
+
+  if (!req.files || !req.files.videoFile || !req.files.thumbnail) {
+    res.status(400);
+    throw new ApiError(400, "Both video and thumbnail file is required");
+  }
+
+  const videoLocalPath = req.files.videoFile[0].path;
+  const thumbnailLocalPath = req.files.thumbnail[0].path;
+
+  try {
+    const uploadVideo = await uploadOnCloudinary(
+      videoLocalPath,
+      "video",
+      "videos"
+    );
+    const uploadThumbnail = await uploadOnCloudinary(
+      thumbnailLocalPath,
+      "image",
+      "thumbnail"
+    );
+
+    const videoData = {
+      title,
+      description,
+      videoUrl: uploadVideo.secure_url,
+      thumbnailUrl: uploadThumbnail.secure_url,
+      duration: uploadOnCloudinary.duration,
+    };
+
+    const video = await Video.create(videoData);
+    if (!video) {
+      res.status(500);
+      throw new ApiError(500, "Failed to create video");
+    }
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, video, "Video created successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Failed to publish video");
+  }
+});
+
 export { getAllVideos, publishAVideo };
