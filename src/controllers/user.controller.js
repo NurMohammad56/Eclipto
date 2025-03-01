@@ -74,7 +74,7 @@ const registerUser = AsyncHandler(async (req, res) => {
     $or: [{ email }, { userName }],
   });
 
-  if (!existedUser) {
+  if (existedUser) {
     throw new ApiError(409, "User already exists");
   }
 
@@ -116,7 +116,7 @@ const registerUser = AsyncHandler(async (req, res) => {
   });
 
   // remove password and refreshToken
-  const createdUser = await User.find(user._id).select(
+  const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
 

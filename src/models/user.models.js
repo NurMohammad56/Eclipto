@@ -78,7 +78,7 @@ userSchema.methods.generateAccessToken = function () {
       _id: this._id, // going to check user id while verifying token
       email: this.email,
       userName: this.userName,
-      fullName: this.fullName,
+      fullName: this.fullN,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
