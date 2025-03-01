@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getAllVideos,
   publishAVideo,
+  getVideoById,
 } from "../controllers/video.controller.js";
 
 const router = Router();
@@ -17,4 +18,5 @@ router
     publishAVideo
   );
 
+router.route("/getSingleVideo/:videoId").get(getVideoById);
 export default router;
