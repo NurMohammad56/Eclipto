@@ -350,6 +350,7 @@ const getCurrentUser = AsyncHandler(async (req, res) => {
   <<<<<<<<<<<<<<<<<<<This part is for personal things to implement>>>>>>>>>>>>>>>>>>>>>>>>>
   1. find the user using req.user and also retrurn
   */
+  console.log(req.user);
   return res
     .status(200)
     .json(

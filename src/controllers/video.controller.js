@@ -18,6 +18,8 @@ const getAllVideos = AsyncHandler(async (req, res) => {
     userId,
   } = req.query;
 
+  console.log(req.user);
+
   let filter = {};
 
   if (query) {
@@ -55,7 +57,14 @@ const getAllVideos = AsyncHandler(async (req, res) => {
 // publish the video
 const publishAVideo = AsyncHandler(async (req, res) => {
   const { title, description } = req.body;
+  const userId = req.user;
 
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  console.log(req.files);
   if (!req.files || !req.files.videoFile || !req.files.thumbnail) {
     throw new ApiError(400, "Both video and thumbnail files are required");
   }
@@ -93,6 +102,7 @@ const publishAVideo = AsyncHandler(async (req, res) => {
 
     const videoData = {
       title,
+      owner: user.userName,
       description,
       videoFile: uploadVideo.secure_url,
       thumbnail: uploadThumbnail.secure_url,
@@ -108,7 +118,8 @@ const publishAVideo = AsyncHandler(async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, video, "Video created successfully"));
   } catch (error) {
-    throw new ApiError(500, "Failed to publish video");
+    console.error("Error while publishing video:", error);
+    throw new ApiError(500, error.message || "Failed to publish video");
   }
 });
 
