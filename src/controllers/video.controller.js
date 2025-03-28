@@ -5,6 +5,7 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { Video } from "../models/video.models.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
+import fs from "fs";
 
 // Get all videos
 const getAllVideos = AsyncHandler(async (req, res) => {
@@ -56,37 +57,51 @@ const publishAVideo = AsyncHandler(async (req, res) => {
   const { title, description } = req.body;
 
   if (!req.files || !req.files.videoFile || !req.files.thumbnail) {
-    res.status(400);
-    throw new ApiError(400, "Both video and thumbnail file is required");
+    throw new ApiError(400, "Both video and thumbnail files are required");
   }
 
-  const videoLocalPath = req.files.videoFile[0].path;
-  const thumbnailLocalPath = req.files.thumbnail[0].path;
+  const videoFile = req.files.videoFile[0];
+  const thumbnailFile = req.files.thumbnail[0];
+
+  if (!videoFile?.path || !thumbnailFile?.path) {
+    throw new ApiError(400, "Invalid file paths for video or thumbnail");
+  }
 
   try {
     const uploadVideo = await uploadOnCloudinary(
-      videoLocalPath,
+      videoFile.path,
       "video",
       "videos"
     );
     const uploadThumbnail = await uploadOnCloudinary(
-      thumbnailLocalPath,
+      thumbnailFile.path,
       "image",
-      "thumbnail"
+      "thumbnails"
     );
+
+    if (!uploadVideo?.secure_url || !uploadThumbnail?.secure_url) {
+      throw new ApiError(500, "Cloudinary upload failed");
+    }
+
+    try {
+      if (fs.existsSync(videoFile.path)) fs.unlinkSync(videoFile.path);
+      if (fs.existsSync(thumbnailFile.path)) fs.unlinkSync(thumbnailFile.path);
+      console.log("Local files deleted successfully!");
+    } catch (cleanupError) {
+      console.error("Failed to delete local files:", cleanupError);
+    }
 
     const videoData = {
       title,
       description,
-      videoUrl: uploadVideo.secure_url,
-      thumbnailUrl: uploadThumbnail.secure_url,
-      duration: uploadOnCloudinary.duration,
+      videoFile: uploadVideo.secure_url,
+      thumbnail: uploadThumbnail.secure_url,
+      duration: uploadVideo.duration || 0,
     };
 
     const video = await Video.create(videoData);
     if (!video) {
-      res.status(500);
-      throw new ApiError(500, "Failed to create video");
+      throw new ApiError(500, "Failed to create video in database");
     }
 
     res
@@ -112,4 +127,44 @@ const getVideoById = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, singleVideo, "Video fetched successfully"));
 });
 
-export { getAllVideos, publishAVideo, getVideoById };
+// Update video by id
+const updateVideoById = AsyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { title, description } = req.body;
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+
+  let updateData = { title, description };
+
+  if (req.files && req.files.thumbnail) {
+    const thumbnailLocalPath = req.files.thumbnail[0].path;
+
+    try {
+      const uploadThumbnail = await uploadOnCloudinary(
+        thumbnailLocalPath,
+        "image",
+        "thumbnail"
+      );
+      updateData.thumbnail = uploadThumbnail.secure_url;
+    } catch (error) {
+      throw new ApiError(500, "Failed to upload thumbnail");
+    }
+  }
+
+  const updatedVideo = await Video.findByIdAndUpdate(videoId, updateData, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!updatedVideo) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedVideo, "Video updated successfully"));
+});
+
+export { getAllVideos, publishAVideo, getVideoById, updateVideoById };
