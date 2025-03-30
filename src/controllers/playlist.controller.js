@@ -180,3 +180,38 @@ export const deletePlaylist = AsyncHandler(async (req, res) => {
         throw new ApiError(500, error.message || "Failed to delete playlist");
     }
 })
+
+// Update playlist
+export const updatePlaylist = AsyncHandler(async (req, res) => {
+    try {
+        const { playlistId } = req.params;
+        const { name, description } = req.body;
+
+        if (!playlistId) {
+            throw new ApiError(400, "Playlist ID is required");
+        }
+
+        if (!name && !description) {
+            throw new ApiError(400, "Name or description is required");
+        }
+
+        const playlist = await Playlist.findByIdAndUpdate(
+            playlistId,
+            {
+                $set: { name, description }
+            },
+            { new: true }
+        )
+
+        if (!playlist) {
+            throw new ApiError(404, "Playlist not found");
+        }
+
+        res.status(200).json(
+            new ApiResponse(200, playlist, "Playlist updated successfully")
+        );
+    } catch (error) {
+        console.error("Error while updating playlist", error);
+        throw new ApiError(500, error.message || "Failed to update playlist");
+    }
+})
