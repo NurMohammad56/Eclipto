@@ -158,3 +158,25 @@ export const removeVideoFromPlaylist = AsyncHandler(async (req, res) => {
         throw new ApiError(500, error.message || "Failed to remove video from playlist");
     }
 })
+
+// Delete playlist
+export const deletePlaylist = AsyncHandler(async (req, res) => {
+    try {
+        const { playlistId } = req.params;
+        if (!playlistId) {
+            throw new ApiError(400, "Playlist ID is required");
+        }
+
+        const playlist = await Playlist.findByIdAndDelete(playlistId);
+        if (!playlist) {
+            throw new ApiError(404, "Playlist not found");
+        }
+
+        res.status(200).json(
+            new ApiResponse(200, playlist, "Playlist deleted successfully")
+        );
+    } catch (error) {
+        console.error("Error while deleting playlist", error);
+        throw new ApiError(500, error.message || "Failed to delete playlist");
+    }
+})
