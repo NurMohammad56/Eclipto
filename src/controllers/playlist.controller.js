@@ -98,3 +98,33 @@ export const getPlaylistById = AsyncHandler(async (req, res) => {
         throw new ApiError(500, error.message || "Failed to fetch playlist");
     }
 })
+
+// Add a video to the playlist
+export const addVideoToPlaylist = AsyncHandler(async (req, res) => {
+    try {
+        const { playlistId, videoId } = req.body;
+
+        if (!playlistId || !videoId) {
+            throw new ApiError(400, "Playlist ID and Video ID are required");
+        }
+
+        const playlist = await Playlist.findByIdAndUpdate(
+            playlistId,
+            {
+                $push: { videos: isValidObjectId }
+            },
+            { new: true, runValidators: true }
+        )
+
+        if (!playlist) {
+            throw new ApiError(404, "Playlist not found");
+        }
+
+        res.status(200).json(
+            new ApiResponse(200, playlist, "Video added successfully to playlist")
+        );
+    } catch (error) {
+        console.error("Error while adding video to playlist", error);
+        throw new ApiError(500, error.message || "Failed to add video to playlist");
+    }
+})
