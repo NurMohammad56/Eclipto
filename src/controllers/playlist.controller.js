@@ -1,7 +1,7 @@
+import mongoose, { isValidObjectId } from "mongoose";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { User } from "./../models/user.models.js";
 import { Playlist } from "../models/playlist.models.js";
 
 // Create playlist
@@ -14,7 +14,7 @@ export const createPlayList = AsyncHandler(async (req, res) => {
             throw new ApiError(400, "Name is required");
         }
 
-        if (!userId) {
+        if (!isValidObjectId(userId)) {
             throw new ApiError(401, "Unauthorized user");
         }
 
@@ -56,7 +56,7 @@ export const getUserPlaylist = AsyncHandler(async (req, res) => {
     try {
         const { userId } = req.params;
 
-        if (!userId) {
+        if (!isValidObjectId(userId)) {
             throw new ApiError(400, "User ID is required");
         }
         const playlist = await playlist.findById(userId);
@@ -80,7 +80,7 @@ export const getPlaylistById = AsyncHandler(async (req, res) => {
     try {
         const { playlistId } = req.params;
 
-        if (!playlistId) {
+        if (!isValidObjectId(playlistId)) {
             throw new ApiError(400, "Playlist ID is required");
         }
 
@@ -104,7 +104,7 @@ export const addVideoToPlaylist = AsyncHandler(async (req, res) => {
     try {
         const { playlistId, videoId } = req.body;
 
-        if (!playlistId || !videoId) {
+        if (!isValidObjectId(playlistId) || !isValidObjectId(videoId)) {
             throw new ApiError(400, "Playlist ID and Video ID are required");
         }
 
@@ -134,7 +134,7 @@ export const removeVideoFromPlaylist = AsyncHandler(async (req, res) => {
     try {
         const { playlistId } = req.params;
         const { videoId } = req.body;
-        if (!playlistId || !videoId) {
+        if (!isValidObjectId(playlistId) || !isValidObjectId(videoId)) {
             throw new ApiError(400, "Playlist ID and Video ID are required");
         }
 
@@ -163,7 +163,7 @@ export const removeVideoFromPlaylist = AsyncHandler(async (req, res) => {
 export const deletePlaylist = AsyncHandler(async (req, res) => {
     try {
         const { playlistId } = req.params;
-        if (!playlistId) {
+        if (!!isValidObjectId(playlistId)) {
             throw new ApiError(400, "Playlist ID is required");
         }
 
@@ -187,7 +187,7 @@ export const updatePlaylist = AsyncHandler(async (req, res) => {
         const { playlistId } = req.params;
         const { name, description } = req.body;
 
-        if (!playlistId) {
+        if (!isValidObjectId(playlistId)) {
             throw new ApiError(400, "Playlist ID is required");
         }
 
