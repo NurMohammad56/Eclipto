@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -22,7 +22,7 @@ export const toggleSubscribe = AsyncHandler(async (req, res) => {
         if (!channel) {
             throw new ApiError(404, "Channel not found");
         }
-        const subscription = await Subcription.findOne({
+        const subscription = await Subscription.findOne({
             subscriber: userId,
             channel: channelId
         });
@@ -31,10 +31,35 @@ export const toggleSubscribe = AsyncHandler(async (req, res) => {
         } else {
             //Actually a user is a subscriber and also a user is a channel
 
-            await Subcription.create({ subscriber: userId, channel: channelId });
+            await Subscription.create({ subscriber: userId, channel: channelId });
         }
         res.status(200).json(ApiResponse.success(true));
     } catch (error) {
         throw new ApiError(500, error.message);
     }
 })
+
+// controller to return subscriber list of a channel
+export const getUserChannelSubscribers = AsyncHandler(async (req, res) => {
+    const { channelId } = req.params;
+
+    if (!isValidObjectId(channelId)) {
+        throw new ApiError(400, "Invalid channel ID");
+    }
+
+    const subscribers = await Subcription.find({ channel: channelId })
+        .populate("subscriber", "userName fullName avatar")
+        .lean();
+
+    if (!subscribers.length) {
+        return res.status(404).json(ApiResponse.error("No subscribers found for this channel."));
+    }
+
+    res.status(200).json(
+        ApiResponse(
+            200,
+            subscribers,
+            "Subscribed users fetched successfully"
+        )
+    )
+});
