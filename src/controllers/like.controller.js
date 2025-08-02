@@ -10,6 +10,7 @@ import { Like } from "../models/like.models.js";
 // 3
 // 4
 // 5
+// 6
 
 // Toggle like on a video
 export const toggleVideoLike = AsyncHandler(async (req, res) => {
