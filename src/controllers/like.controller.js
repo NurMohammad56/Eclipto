@@ -5,6 +5,7 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { Comment } from "../models/comment.models.js";
 import { Video } from "../models/video.models.js";
 import { Like } from "../models/like.models.js";
+// 1
 
 // Toggle like on a video
 export const toggleVideoLike = AsyncHandler(async (req, res) => {
