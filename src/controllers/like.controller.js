@@ -90,3 +90,23 @@ export const toggleCommentLike = AsyncHandler(async (req, res) => {
     }
 
 })
+
+//  Check if the video already is in playlist
+export const checkAlreadyInPlaylist = AsyncHandler(async (req, res) => {
+    try {
+        const { videoId } = req.params;
+        const userId = req.user._id;
+
+        if (!mongoose.isValidObjectId(videoId)) {
+            throw new ApiError(400, "Invalid video ID");
+        }
+
+        // Check if the video is already in the user's playlist
+        const isInPlaylist = await Playlist.exists({ video: videoId, addedBy: userId });
+
+        return res.status(200).json(new ApiResponse(200, "Check playlist status", { isInPlaylist }));
+    } catch (error) {
+        console.error("Error while checking playlist status:", error);
+        throw new ApiError(500, error.message || "Failed to check playlist status");
+    }
+});
